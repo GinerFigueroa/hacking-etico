@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hacking Ético en Inglés — Pentesting, Herramientas y Fases</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#1B2A4A;
+    --navy-deep:#101a30;
+    --paper:#F3EEE1;
+    --paper-dim:#e7e0cd;
+    --gold:#C9A227;
+    --stamp:#B33A3A;
+    --ink:#20263a;
+    --ok:#4C7A5B;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--navy-deep);
+    background-image:
+      radial-gradient(circle at 15% 10%, rgba(201,162,39,0.08), transparent 40%),
+      radial-gradient(circle at 85% 90%, rgba(201,162,39,0.06), transparent 40%);
+    font-family:'JetBrains Mono', monospace;
+    color:var(--paper);
+    padding:0 0 60px 0;
+  }
+  .cover{
+    max-width:900px;
+    margin:0 auto;
+    padding:48px 24px 32px;
+    text-align:center;
+    border-bottom:2px solid var(--gold);
+  }
+  .cover .eyebrow{
+    letter-spacing:.35em;
+    font-size:11px;
+    color:var(--gold);
+    text-transform:uppercase;
+  }
+  .cover h1{
+    font-family:'Fraunces', serif;
+    font-weight:700;
+    font-size:clamp(32px,6vw,54px);
+    margin:10px 0 6px;
+    color:var(--paper);
+  }
+  .cover p{
+    color:#cfd6e8;
+    font-size:14px;
+    max-width:620px;
+    margin:0 auto;
+    line-height:1.6;
+  }
+  .passport-strip{
+    display:flex;
+    justify-content:center;
+    gap:6px;
+    margin-top:22px;
+    flex-wrap:wrap;
+  }
+  .stamp{
+    border:2px dashed var(--gold);
+    border-radius:50%;
+    width:56px;height:56px;
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Fraunces',serif;
+    font-weight:700;
+    font-size:13px;
+    color:var(--gold);
+    opacity:.55;
+    transform:rotate(-6deg);
+    transition:opacity .3s, transform .3s;
+  }
+  .stamp.active{
+    opacity:1;
+    border-style:solid;
+    color:var(--stamp);
+    border-color:var(--stamp);
+    transform:rotate(-6deg) scale(1.05);
+  }
+  .wrap{max-width:900px;margin:36px auto 0;padding:0 24px;}
+  .ticket{
+    background:var(--paper);
+    color:var(--ink);
+    border-radius:10px;
+    margin-bottom:18px;
+    overflow:hidden;
+    box-shadow:0 6px 18px rgba(0,0,0,.25);
+    border:1px solid var(--paper-dim);
+  }
+  .ticket-head{
+    width:100%;
+    display:flex;
+    align-items:center;
+    gap:16px;
+    background:none;
+    border:none;
+    padding:18px 20px;
+    cursor:pointer;
+    text-align:left;
+    font-family:inherit;
+  }
+  .ticket-head:hover{background:rgba(27,42,74,.04);}
+  .gate{
+    font-family:'Fraunces',serif;
+    font-weight:700;
+    font-size:22px;
+    color:var(--navy);
+    min-width:64px;
+    border-right:2px dashed var(--paper-dim);
+    padding-right:14px;
+  }
+  .gate small{display:block;font-family:'JetBrains Mono',monospace;font-weight:400;font-size:10px;letter-spacing:.15em;color:var(--stamp);text-transform:uppercase;}
+  .head-text h2{
+    margin:0;
+    font-family:'Fraunces',serif;
+    font-size:19px;
+    font-weight:600;
+    color:var(--navy);
+  }
+  .head-text span{
+    font-size:12px;
+    color:#6b7280;
+  }
+  .chevron{
+    margin-left:auto;
+    font-size:18px;
+    color:var(--gold);
+    transition:transform .25s ease;
+  }
+  .ticket.open .chevron{transform:rotate(180deg);}
+  .ticket-body{
+    max-height:0;
+    overflow:hidden;
+    transition:max-height .45s ease;
+    border-top:2px dashed var(--paper-dim);
+  }
+  .ticket.open .ticket-body{max-height:9999px;}
+  .ticket-inner{padding:6px 22px 22px 22px;}
+  .ticket-inner ul{margin:10px 0;padding-left:20px;line-height:1.65;font-size:14px;}
+  .ticket-inner p{line-height:1.65;font-size:14px;}
+  .goal{
+    display:inline-block;
+    margin-top:6px;
+    font-size:11px;
+    letter-spacing:.05em;
+    background:var(--navy);
+    color:var(--paper);
+    padding:3px 9px;
+    border-radius:20px;
+  }
+  .phrase-box{
+    background:#fff;
+    border:1px solid var(--paper-dim);
+    border-radius:8px;
+    padding:10px 12px;
+    margin:8px 0;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+  }
+  .phrase-text{font-size:14px; flex:1;}
+  .phrase-text b{color:var(--navy);}
+  .phrase-text i{display:block;color:#6b7280;font-size:12px;font-style:normal;margin-top:2px;}
+  .speak-btn{
+    flex:0 0 auto;
+    background:var(--navy);
+    color:var(--paper);
+    border:none;
+    border-radius:50%;
+    width:34px;height:34px;
+    cursor:pointer;
+    font-size:15px;
+    transition:transform .15s ease, background .15s ease;
+  }
+  .speak-btn:hover{background:var(--stamp);}
+  .speak-btn:active{transform:scale(.9);}
+  .speak-btn.playing{background:var(--ok);}
+  .traduccion{
+    background: #f0f4f8;
+    border-left: 4px solid var(--gold);
+    padding: 10px 14px;
+    margin-top: 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #333;
+  }
+  .traduccion b{color:var(--navy);}
+  .code-block{
+    background:#0f172a;
+    color:#e2e8f0;
+    padding:12px 14px;
+    border-radius:8px;
+    font-size:12.5px;
+    line-height:1.6;
+    overflow-x:auto;
+    margin:10px 0;
+    border-left:4px solid var(--gold);
+    font-family:'JetBrains Mono', monospace;
+    white-space:pre;
+  }
+  .code-block .kw{color:#c792ea;}
+  .code-block .fn{color:#82aaff;}
+  .code-block .st{color:#c3e88d;}
+  .code-block .cm{color:#6b7a99;}
+  .footer-note{
+    max-width:900px;margin:30px auto 0;padding:0 24px;
+    font-size:12px;color:#9aa3bb;text-align:center;
+  }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <div class="eyebrow">Boarding pass · Hacking Ético · Pentesting</div>
+  <h1>Hacking Ético en Inglés</h1>
+  <p>Aprende inglés técnico aplicado a ciberseguridad, pentesting y hacking ético. Toca cada tarjeta para abrir el paso, pulsa 🔊 para escuchar la pronunciación y lee la traducción al final de cada hoja.</p>
+  <div class="passport-strip">
+    <div class="stamp active" data-level="A1">A1</div>
+    <div class="stamp" data-level="A2">A2</div>
+    <div class="stamp" data-level="B1">B1</div>
+    <div class="stamp" data-level="B2">B2</div>
+    <div class="stamp" data-level="C1">C1</div>
+    <div class="stamp" data-level="C2">C2</div>
+  </div>
+</div>
+
+<div class="wrap" id="tickets"></div>
+
+<p class="footer-note">🔊 Pulsa el botón de bocina para escuchar la pronunciación en inglés. La traducción está al final de cada paso.</p>
+
+<script>
+// ==================== DATA: PASOS DE HACKING ÉTICO ====================
+const steps = [
+  {
+    gate:"01", tag:"Step 1", title:"What is Ethical Hacking?",
+    body:`
+    <p><b>English paragraph:</b></p>
+    <div class="phrase-box">
+      <div class="phrase-text">
+        <b>Ethical hacking</b> is the practice of testing computer systems to find security weaknesses before malicious hackers do. An ethical hacker, also called a <b>white hat hacker</b>, has legal permission from the owner to test the system. The goal is to protect data and improve security, not to cause damage.
+      </div>
+      <button class="speak-btn" onclick="speak(this, 'Ethical hacking is the practice of testing computer systems to find security weaknesses before malicious hackers do. An ethical hacker, also called a white hat hacker, has legal permission from the owner to test the system. The goal is to protect data and improve security, not to cause damage.')">🔊</button>
+    </div>
+    <div class="traduccion">
+      <b>Traducción:</b> El hacking ético es la práctica de probar sistemas informáticos para encontrar debilidades de seguridad antes de que lo hagan los hackers maliciosos. Un hacker ético, también llamado hacker de sombrero blanco, tiene permiso legal del propietario para probar el sistema. El objetivo es proteger los datos y mejorar la seguridad, no causar daño.
+    </div>
+    <span class="goal">Meta: entender qué es el hacking ético en inglés</span>`
+  },
+  {
+    gate:"02", tag:"Step 2", title:"Types of Hackers",
+    body:`
+    <p><b>English paragraph:</b></p>
+    <div class="phrase-box">
+      <div class="phrase-text">
+        There are three main types of hackers: <b>white hat</b>, <b>black hat</b>, and <b>grey hat</b>. White hat hackers work legally to improve security. Black hat hackers break the law for personal gain. Grey hat hackers sometimes act legally and sometimes illegally, without permission. Ethical hacking focuses on white hat techniques.
+      </div>
+      <button class="speak-btn" onclick="speak(this, 'There are three main types of hackers: white hat, black hat, and grey hat. White hat hackers work legally to improve security. Black hat hackers break the law for personal gain. Grey hat hackers sometimes act legally and sometimes illegally, without permission. Ethical hacking focuses on white hat techniques.')">🔊</button>
+    </div>
+    <div class="traduccion">
+      <b>Traducción:</b> Hay tres tipos principales de hackers: sombrero blanco, sombrero negro y sombrero gris. Los hackers de sombrero blanco trabajan legalmente para mejorar la seguridad. Los de sombrero negro violan la ley por beneficio personal. Los de sombrero gris a veces actúan legalmente y a veces ilegalmente, sin permiso. El hacking ético se enfoca en técnicas de sombrero blanco.
+    </div>
+    <span class="goal">Meta: diferenciar tipos de hackers en inglés</span>`
+  },
+  {
+    gate:"03", tag:"Step 3", title:"Phases of Ethical Hacking",
+    body:`
+    <p><b>English paragraph:</b></p>
+    <div class="phrase-box">
+      <div class="phrase-text">
+        Ethical hacking has five phases: <b>reconnaissance</b>, <b>scanning</b>, <b>gaining access</b>, <b>maintaining access</b>, and <b>covering tracks</b>. In reconnaissance, we collect information about the target. In scanning, we look for open ports and vulnerabilities. In the final phase, we report the findings to the owner.
+      </div>
+      <button class="speak-btn" onclick="speak(this, 'Ethical hacking has five phases: reconnaissance, scanning, gaining access, maintaining access, and covering tracks. In reconnaissance, we collect information about the target. In scanning, we look for open ports and vulnerabilities. In the final phase, we report the findings to the owner.')">🔊</button>
+    </div>
+    <div class="traduccion">
+      <b>Traducción:</b> El hacking ético tiene cinco fases: reconocimiento, escaneo, obtención de acceso, mantenimiento de acceso y borrado de huellas. En el reconocimiento, recolectamos información sobre el objetivo. En el escaneo, buscamos puertos abiertos y vulnerabilidades. En la fase final, reportamos los hallazgos al propietario.
+    </div>
+    <span class="goal">Meta: conocer las fases del hacking ético</span>`
+  },
+  {
+    gate:"04", tag:"Step 4", title:"Reconnaissance",
+    body:`
+    <p><b>English paragraph:</b></p>
+    <div class="phrase-box">
+      <div class="phrase-text">
+        <b>Reconnaissance</b> is the first phase. It can be <b>passive</b> or <b>active</b>. In passive reconnaissance, we collect information without touching the target, using public sources like Google, social media, and WHOIS. In active reconnaissance, we interact directly with the target, for example with <b>ping</b> or <b>nslookup</b>. The goal is to know the target before attacking.
+      </div>
+      <button class="speak-btn" onclick="speak(this, 'Reconnaissance is the first phase. It can be passive or active. In passive reconnaissance, we collect information without touching the target, using public sources like Google, social media, and WHOIS. In active reconnaissance, we interact directly with the target, for example with ping or nslookup. The goal is to know the target before attacking.')">🔊</button>
+    </div>
+    <div class="traduccion">
+      <b>Traducción:</b> El reconocimiento es la primera fase. Puede ser pasivo o activo. En el reconocimiento pasivo, recolectamos información sin tocar el objetivo, usando fuentes públicas como Google, redes sociales y WHOIS. En el reconocimiento activo, interactuamos directamente con el objetivo, por ejemplo con ping o nslookup. El objetivo es conocer al objetivo antes de atacar.
+    </div>
+    <span class="goal">Meta: entender reconocimiento pasivo y activo</span>`
+  },
+  {
+    gate:"05", tag:"Step 5", title:"Scanning and Enumeration",
+    body:`
+    <p><b>English paragraph:</b></p>
+    <div class="phrase-box">
+      <div class="phrase-text">
+        <b>Scanning</b> is the second phase. We use tools like <b>Nmap</b> to find open ports, running services, and operating systems. <b>Enumeration</b> is the next step: we extract detailed information from the services, such as usernames, shares, and versions. This information helps us find vulnerabilities.
+      </div>
+      <button class="speak-btn" onclick="speak(this, 'Scanning is the second phase. We use tools like Nmap to find open ports, running services, and operating systems. Enumeration is the next step: we extract detailed information from the services, such as usernames, shares, and versions. This information helps us find vulnerabilities.')">🔊</button>
+    </div>
+    <div class="traduccion">
+      <b>Traducción:</b> El escaneo es la segunda fase. Usamos herramientas como Nmap para encontrar puertos abiertos, servicios en ejecución y sistemas operativos. La enumeración es el siguiente paso: extraemos información detallada de los servicios, como nombres de usuario, recursos compartidos y versiones. Esta información nos ayuda a encontrar vulnerabilidades.
+    </div>
+    <span class="goal">Meta: aprender escaneo y enumeración</span>`
+  },
+  {
+    gate:"06", tag:"Step 6", title:"Vulnerability Analysis",
+    body:`
+    <p><b>English paragraph:</b></p>
+    <div class="phrase-box">
+      <div class="phrase-text">
+        <b>Vulnerability analysis</b> is the process of identifying, classifying, and prioritizing security weaknesses in a system. We use tools like <b>Nessus</b>, <b>OpenVAS</b>, and <b>Nikto</b>. A vulnerability can be a software bug, a misconfiguration, or a weak password. The goal is to find the weaknesses before the attacker does.
+      </div>
+      <button class="speak-btn" onclick="speak(this, 'Vulnerability analysis is the process of identifying, classifying, and prioritizing security weaknesses in a system. We use tools like Nessus, OpenVAS, and Nikto. A vulnerability can be a software bug, a misconfiguration, or a weak password. The goal is to find the weaknesses before the attacker does.')">🔊</button>
+    </div>
+    <div class="traduccion">
+      <b>Traducción:</b> El análisis de vulnerabilidades es el proceso de identificar, clasificar y priorizar debilidades de seguridad en un sistema. Usamos herramientas como Nessus, OpenVAS y Nikto. Una vulnerabilidad puede ser un error de software, una mala configuración o una contraseña débil. El objetivo es encontrar las debilidades antes que el atacante.
+    </div>
+    <span class="goal">Meta: analizar vulnerabilidades con herramientas</span>`
+  },
+  {
+    gate:"07", tag:"Step 7", title:"Exploitation",
+    body:`
+    <p><b>English paragraph:</b></p>
+    <div class="phrase-box">
+      <div class="phrase-text">
+        <b>Exploitation</b> is the phase where we try to gain access to the system using the vulnerabilities we found. We use tools like <b>Metasploit</b>, <b>SQLmap</b>, and <b>Burp Suite</b>. The goal is to demonstrate that the vulnerability is real and can be exploited. In ethical hacking, we never cause damage or steal data.
+      </div>
+      <button class="speak-btn" onclick="speak(this, 'Exploitation is the phase where we try to gain access to the system using the vulnerabilities we found. We use tools like Metasploit, SQLmap, and Burp Suite. The goal is to demonstrate that the vulnerability is real and can be exploited. In ethical hacking, we never cause damage or steal data.')">🔊</button>
+    </div>
+    <div class="traduccion">
+      <b>Traducción:</b> La explotación es la fase donde intentamos obtener acceso al sistema usando las vulnerabilidades que encontramos. Usamos herramientas como Metasploit, SQLmap y Burp Suite. El objetivo es demostrar que la vulnerabilidad es real y puede ser explotada. En hacking ético, nunca causamos daño ni robamos datos.
+    </div>
+    <span class="goal">Meta: entender la explotación controlada</span>`
+  },
+  {
+    gate:"08", tag:"Step 8", title:"Post-Exploitation",
+    body:`
+    <p><b>English paragraph:</b></p>
+    <div class="phrase-box">
+      <div class="phrase-text">
+        <b>Post-exploitation</b> is what we do after gaining access. We try to maintain access, escalate privileges, and move laterally to other systems. We also collect evidence for the report. The goal is to show the real impact of the vulnerability on the organization.
+      </div>
+      <button class="speak-btn" onclick="speak(this, 'Post-exploitation is what we do after gaining access. We try to maintain access, escalate privileges, and move laterally to other systems. We also collect evidence for the report. The goal is to show the real impact of the vulnerability on the organization.')">🔊</button>
+    </div>
+    <div class="traduccion">
+      <b>Traducción:</b> La post-explotación es lo que hacemos después de obtener acceso. Intentamos mantener el acceso, escalar privilegios y movernos lateralmente a otros sistemas. También recolectamos evidencia para el informe. El objetivo es mostrar el impacto real de la vulnerabilidad en la organización.
+    </div>
+    <span class="goal">Meta: entender la post-explotación</span>`
+  },
+  {
+    gate:"09", tag:"Step 9", title:"Reporting",
+    body:`
+    <p><b>English paragraph:</b></p>
+    <div class="phrase-box">
+      <div class="phrase-text">
+        <b>Reporting</b> is the final and most important phase. We write a clear document with the findings, the risk level, and the recommendations. The report must be easy to understand for both technical and non-technical people. A good report helps the organization fix the vulnerabilities and improve its security.
+      </div>
+      <button class="speak-btn" onclick="speak(this, 'Reporting is the final and most important phase. We write a clear document with the findings, the risk level, and the recommendations. The report must be easy to understand for both technical and non-technical people. A good report helps the organization fix the vulnerabilities and improve its security.')">🔊</button>
+    </div>
+    <div class="traduccion">
+      <b>Traducción:</b> El reporte es la fase final y más importante. Escribimos un documento claro con los hallazgos, el nivel de riesgo y las recomendaciones. El informe debe ser fácil de entender tanto para personas técnicas como no técnicas. Un buen informe ayuda a la organización a corregir las vulnerabilidades y mejorar su seguridad.
+    </div>
+    <span class="goal">Meta: aprender a reportar hallazgos</span>`
+  },
+  {
+    gate:"10", tag:"Step 10", title:"Tools and Legal Framework",
+    body:`
+    <p><b>English paragraph:</b></p>
+    <div class="phrase-box">
+      <div class="phrase-text">
+        Ethical hackers use many tools: <b>Kali Linux</b>, <b>Nmap</b>, <b>Metasploit</b>, <b>Wireshark</b>, <b>Burp Suite</b>, and <b>John the Ripper</b>. But tools are not enough: ethical hacking requires <b>legal authorization</b>, a <b>scope agreement</b>, and <b>professional ethics</b>. Without permission, hacking is a crime.
+      </div>
+      <button class="speak-btn" onclick="speak(this, 'Ethical hackers use many tools: Kali Linux, Nmap, Metasploit, Wireshark, Burp Suite, and John the Ripper. But tools are not enough: ethical hacking requires legal authorization, a scope agreement, and professional ethics. Without permission, hacking is a crime.')">🔊</button>
+    </div>
+    <div class="code-block"><span class="cm"># Example: basic Nmap scan (only with permission)</span>
+nmap -sV -sC -oN scan.txt <span class="st">192.168.1.1</span>
+
+<span class="cm"># Example: Metasploit console</span>
+msfconsole
+use exploit/windows/smb/ms17_010_eternalblue
+<span class="kw">set</span> RHOSTS <span class="st">192.168.1.10</span>
+<span class="kw">run</span></div>
+    <div class="traduccion">
+      <b>Traducción:</b> Los hackers éticos usan muchas herramientas: Kali Linux, Nmap, Metasploit, Wireshark, Burp Suite y John the Ripper. Pero las herramientas no son suficientes: el hacking ético requiere autorización legal, un acuerdo de alcance y ética profesional. Sin permiso, el hacking es un delito.
+    </div>
+    <span class="goal">Meta: conocer herramientas y marco legal</span>`
+  }
+];
+
+// ==================== RENDERIZADO ====================
+const container = document.getElementById('tickets');
+
+steps.forEach((step) => {
+  const ticket = document.createElement('div');
+  ticket.className = 'ticket';
+  ticket.innerHTML = `
+    <button class="ticket-head" onclick="toggleTicket(this)">
+      <div class="gate">${step.gate}<small>${step.tag}</small></div>
+      <div class="head-text">
+        <h2>${step.title}</h2>
+        <span>${step.tag}</span>
+      </div>
+      <span class="chevron">▼</span>
+    </button>
+    <div class="ticket-body">
+      <div class="ticket-inner">
+        ${step.body}
+      </div>
+    </div>
+  `;
+  container.appendChild(ticket);
+});
+
+// ==================== FUNCIONES ====================
+function toggleTicket(btn) {
+  const ticket = btn.closest('.ticket');
+  ticket.classList.toggle('open');
+}
+
+function speak(btn, text) {
+  window.speechSynthesis.cancel();
+
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = 'en-US';
+  utterance.rate = 0.9;
+  utterance.pitch = 1;
+
+  document.querySelectorAll('.speak-btn').forEach(b => b.classList.remove('playing'));
+  btn.classList.add('playing');
+
+  utterance.onend = () => btn.classList.remove('playing');
+  utterance.onerror = () => btn.classList.remove('playing');
+
+  window.speechSynthesis.speak(utterance);
+}
+
+// ==================== SELLOS DE NIVEL ====================
+document.querySelectorAll('.stamp').forEach(stamp => {
+  stamp.addEventListener('click', () => {
+    document.querySelectorAll('.stamp').forEach(s => s.classList.remove('active'));
+    stamp.classList.add('active');
+  });
+});
+</script>
+
+</body>
+</html>
